@@ -22,11 +22,6 @@ def ColourSegmentationHSVRed(img):
     # join my masks
     mask = mask1 + mask2
 
-    # output_img = img.copy()
-    # output_img[np.where(mask == 0)] = 0
-    #
-    # output_hsv = imgHSV.copy()
-    # output_hsv[np.where(mask == 0)] = 0
 
 
     return mask
@@ -45,11 +40,51 @@ def ColourSegmentationHLSWhite(img):
     return mask;
 
 
-def FindWally(img):
 
-    return img;
+def FindWaldo(imgRed, imgWhite):
+
+    w, h = imgRed.shape
+
+    bufferX = 15
+    bufferY = 30
 
 
+    for x in range(0, w - bufferX, bufferX):
+        for y in range(0, h - bufferY, bufferY):
+            pixelsRed = imgRed[x:x + bufferX,
+                         y: y + bufferY]
+
+            pixelsWhite = imgWhite[x:x + bufferX,
+                         y: y + bufferY]
+            redPixelCount = CountPixels(pixelsRed)
+            whitePixelCount = CountPixels(pixelsWhite)
+
+            redRatio, whiteRatio = ColourRatio(redPixelCount, whitePixelCount)
+
+
+
+
+def ColourRatio(count1, count2):
+    totalPixels = 15 * 30
+    redRatio = count1 / totalPixels * 100
+    whiteRatio = count2 / totalPixels * 100
+
+    print(redRatio)
+    print(whiteRatio)
+
+    return redRatio, whiteRatio
+
+def CountPixels(pixels):
+
+    h, w = pixels.shape
+    pixelCount = 0
+
+    for x in range(0, h):
+        for y in range(0, w):
+            if(pixels[x, y] != 0):
+                pixelCount += 1
+
+    return pixelCount
 
 imgRed = ColourSegmentationHSVRed(wallyImg)
 imgWhite = ColourSegmentationHLSWhite(wallyImg)
@@ -57,7 +92,10 @@ imgWhite = ColourSegmentationHLSWhite(wallyImg)
 RedWhiteMask = imgRed + imgWhite
 
 bit_or = cv2.bitwise_or(wallyImg,wallyImg, mask= RedWhiteMask);
-sobely = cv2.Sobel(bit_or,cv2.CV_64F,0,1,ksize=1)
+sobely = cv2.Sobel(bit_or, cv2.CV_64F, 0, 1, ksize=1)
+
+
+FindWaldo(imgRed, imgWhite)
 
 plt.imshow(bit_or)
 cv2.imshow("combined", bit_or)
