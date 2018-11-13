@@ -1,8 +1,9 @@
 import cv2
 import numpy as np
 import matplotlib.pyplot as plt
+from scipy import ndimage
+from skimage import morphology
 import matplotlib.image as mpimg
-import math
 
 wallyImg = cv2.imread("Where.jpg")
 
@@ -23,8 +24,6 @@ def ColourSegmentationHSVRed(img):
     # join my masks
     mask = mask1 + mask2
 
-
-
     return mask
 
 def ColourSegmentationHLSWhite(img):
@@ -36,100 +35,57 @@ def ColourSegmentationHLSWhite(img):
     # change 250 to lower numbers to include more values as "white"
     mask = cv2.inRange(Lchannel, 250, 255)
 
+    return mask
 
 
-    return mask;
+def DilateMaskVartically(mask):
+    newMask = mask
 
+    kernel = cv2.getStructuringElement(cv2.MORPH_CROSS, (1, 5))
+    newMask = cv2.dilate(newMask, kernel, iterations=1)
 
+    return newMask;
 
-def FindWaldo(imgRed, imgWhite):
+def RemoveBigAndSmallObjects(in_mask):
 
-    w, h = imgRed.shape
+    out_mask = in_mask
 
+    w, h = out_mask
     bufferX = 15
-    bufferY = 30
+    bufferY = 25
 
-
-    for x in range(0, w - bufferX, bufferX):
-        for y in range(0, h - bufferY, bufferY):
-            pixelsRed = imgRed[x:x + bufferX,
-                         y: y + bufferY]
-
-            pixelsWhite = imgWhite[x:x + bufferX,
-                         y: y + bufferY]
-            redPixelCount = CountPixels(pixelsRed)
-            whitePixelCount = CountPixels(pixelsWhite)
-
-            redRatio, whiteRatio = ColourRatio(redPixelCount, whitePixelCount, bufferX, bufferY)
+    for x in range(0, w):
+        for y in range(0, h):
+            pixels = out_mask[x: x + bufferX,
+                              y: y + bufferY]
 
 
 
-
-
-def ColourRatio(count1, count2, bufferX, bufferY):
-    totalPixels = bufferX * bufferY
-    redRatio = count1 / totalPixels * 100
-    whiteRatio = count2 / totalPixels * 100
-
-    # print(redRatio)
-    # print(whiteRatio)
-
-    return redRatio, whiteRatio
-
-def CountPixels(pixels):
-
-    h, w = pixels.shape
-    pixelCount = 0
-
-    for x in range(0, h):
-        for y in range(0, w):
-            if(pixels[x, y] != 0):
-                pixelCount += 1
-
-    return pixelCount
-
-def DilateMask(mask):
-
-    horizontal = mask
-
-    thresh = cv2.adaptiveThreshold(
-        horizontal, 255,
-        cv2.ADAPTIVE_THRESH_MEAN_C, cv2.THRESH_BINARY_INV,
-        25,
-        15
-    )
-
-
-
-    horizontalStructure = cv2.getStructuringElement(cv2.MORPH_CROSS, (1, 5))
-
-    # horizontal = cv2.erode(horizontal, horizontalStructure)
-    horizontal = cv2.dilate(horizontal, horizontalStructure)
-
-    # NewMask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, shape)
-
-    return horizontal
-
+    return out_mask
 
 
 imgRed = ColourSegmentationHSVRed(wallyImg)
 imgWhite = ColourSegmentationHLSWhite(wallyImg)
 
-dilatedRed = DilateMask(imgRed)
-dilatedWhite = DilateMask(imgWhite)
-
-dilatedOverlap = dilatedRed + dilatedWhite
-
 RedWhiteMask = imgRed + imgWhite
+kernel = cv2.getStructuringElement(cv2.MORPH_CROSS, (1, 4))
 
-bit_or = cv2.bitwise_or(wallyImg,wallyImg, mask= dilatedOverlap);
-
-
-
-FindWaldo(imgRed, imgWhite)
+combinedROI = DilateMaskVartically(imgRed) + DilateMaskVartically(imgWhite)
+# cv2.morphologyEx(combinedROI, cv2.MORPH_OPEN, kernel)
 
 
-plt.imshow(bit_or)
+# combinedROI = combinedROI & (imgRed | imgWhite)
+
+# combinedROI = cv2.erode(combinedROI,kernel,iterations = 2)
+# combinedROI = cv2.dilate(combinedROI,kernel,iterations = 2)
+kernel2 = cv2.getStructuringElement(cv2.MORPH_CROSS, (4, 4))
+
+combinedROI = cv2.morphologyEx(combinedROI, cv2.MORPH_OPEN, kernel2)
+
+bit_or = cv2.bitwise_or(wallyImg,wallyImg, mask= combinedROI)
+
+
+# cv2.imshow("opening", combinedROI)
 cv2.imshow("combined", bit_or)
 
 
