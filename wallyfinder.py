@@ -2,6 +2,7 @@ import cv2
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
+import math
 
 wallyImg = cv2.imread("Where.jpg")
 
@@ -59,18 +60,19 @@ def FindWaldo(imgRed, imgWhite):
             redPixelCount = CountPixels(pixelsRed)
             whitePixelCount = CountPixels(pixelsWhite)
 
-            redRatio, whiteRatio = ColourRatio(redPixelCount, whitePixelCount)
+            redRatio, whiteRatio = ColourRatio(redPixelCount, whitePixelCount, bufferX, bufferY)
 
 
 
 
-def ColourRatio(count1, count2):
-    totalPixels = 15 * 30
+
+def ColourRatio(count1, count2, bufferX, bufferY):
+    totalPixels = bufferX * bufferY
     redRatio = count1 / totalPixels * 100
     whiteRatio = count2 / totalPixels * 100
 
-    print(redRatio)
-    print(whiteRatio)
+    # print(redRatio)
+    # print(whiteRatio)
 
     return redRatio, whiteRatio
 
@@ -86,20 +88,50 @@ def CountPixels(pixels):
 
     return pixelCount
 
+def DilateMask(mask):
+
+    horizontal = mask
+
+    thresh = cv2.adaptiveThreshold(
+        horizontal, 255,
+        cv2.ADAPTIVE_THRESH_MEAN_C, cv2.THRESH_BINARY_INV,
+        25,
+        15
+    )
+
+
+
+    horizontalStructure = cv2.getStructuringElement(cv2.MORPH_CROSS, (1, 5))
+
+    # horizontal = cv2.erode(horizontal, horizontalStructure)
+    horizontal = cv2.dilate(horizontal, horizontalStructure)
+
+    # NewMask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, shape)
+
+    return horizontal
+
+
+
 imgRed = ColourSegmentationHSVRed(wallyImg)
 imgWhite = ColourSegmentationHLSWhite(wallyImg)
 
+dilatedRed = DilateMask(imgRed)
+dilatedWhite = DilateMask(imgWhite)
+
+dilatedOverlap = dilatedRed + dilatedWhite
+
 RedWhiteMask = imgRed + imgWhite
 
-bit_or = cv2.bitwise_or(wallyImg,wallyImg, mask= RedWhiteMask);
-sobely = cv2.Sobel(bit_or, cv2.CV_64F, 0, 1, ksize=1)
+bit_or = cv2.bitwise_or(wallyImg,wallyImg, mask= dilatedOverlap);
+
 
 
 FindWaldo(imgRed, imgWhite)
 
+
 plt.imshow(bit_or)
 cv2.imshow("combined", bit_or)
-cv2.imshow("horizontal gradient", sobely)
+
 
 
 key = cv2.waitKey(0)
