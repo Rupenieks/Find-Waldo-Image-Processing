@@ -1,9 +1,10 @@
+# RONALDS UPENIEKS
+# IMAGE PROCESSING ASSIGNMENT 2
+# C15489352 DT282/4
+
 import cv2
 import numpy as np
-import matplotlib.pyplot as plt
-from scipy import ndimage
-from skimage import morphology
-import matplotlib.image as mpimg
+
 
 wallyImg = cv2.imread("Where.jpg")
 
@@ -119,7 +120,6 @@ kernel2 = np.ones((3,3),np.uint8)
 overlappingPixelsImg = cv2.morphologyEx(overlappingPixelsImg, cv2.MORPH_OPEN, kernel2)
 
 # Step 6: Opening on image to remove "specs" and enlarge Waldo/Wally and leave only him
-# kernelDilate = cv2.getStructuringElement(cv2.MORPH_CROSS, (3, 3))
 kernelDilate = np.ones((7,5),np.uint8)
 overlappingPixelsImg = cv2.morphologyEx(overlappingPixelsImg, cv2.MORPH_OPEN, kernelDilate)
 
