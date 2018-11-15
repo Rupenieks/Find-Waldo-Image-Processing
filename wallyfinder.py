@@ -2,6 +2,35 @@
 # IMAGE PROCESSING ASSIGNMENT 2
 # C15489352 DT282/4
 
+# This program processes in an image from the local directory "Where.jpg" and finds Wally.
+# 1. COLOUR SEGMENTATION - BINARY MASKS
+#    The process involves the segmentation of colours:
+#    (HSV)
+#    Bright red (0, 50, 50) to (3, 255, 255) and dark red (170, 50, 50) to (180, 255, 255) are extracted in two separate
+#    binary masks from the image and combined afterwards for one binary mask that presents both dark and bright red.
+#    (HLS)
+#    White is then extracted in a binary mask also, using only one mask as opposed to red, with a light channel.
+#
+# 2. VERTICAL DILATION OF MASKS
+#    Both the red and white masks are vertically dilated with a morphological transformation (using MORPH_CROSS(1,4))
+#    to construct the structuring element (kernel). This means that the striped lines of red and white will spread
+#    vertically (upward) and overlap each other.
+#
+#3.  CAPTURING OVERLAPPING PIXELS
+#    A new image is created that's completely black. We iterate through it with X and Y while simultaneously checking
+#    the same coordinates in both VERTICALLY DILATED masks of white and red. If a red pixel and a white pixel exist
+#    in the same coordinates, we create a white pixel on those coordinates on the new black image. This is how we
+#    create a new mask that represents where pixels overlap. That's how we locate a potential Wally because of the
+#    striped pattern on his jumper.
+#
+#4.  DILATION AND OPENING - REMOVING SMALL/INVALID ELEMENTS
+#    We now dilate the image to strengthen any remnants left, and then run opening to erode smaller elements and
+#    further strengthen anything that is left. This leaves us with a small portion of Wally's chest in the mask/
+#
+#5.  CAPTURING WALLY'S COORDINATES IN ORDER TO DRAW CIRCLE AROUND HIM
+#    For the last part of actually marking him out in the original image, we use a less than honourable method of
+#    simply locating the first pixels that are not black which we know represent Wally's chest. Returning the coordina-
+#    tes we are able to mark out the place he is in and draw the circle around him in the original image.
 import cv2
 import numpy as np
 
